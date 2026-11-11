@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Инженерный помощник: Температурное перемещение</title>
+    <style>
+        /* Общие стили оформления */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --success-color: #27ae60;
+            --error-color: #c0392b;
+            --background-color: #f5f7fa;
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --border-color: #bdc3c7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Шапка страницы */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: var(--primary-color);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Двухколоночный адаптивный интерфейс */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-background);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: var(--secondary-color);
+            border-bottom: 2px solid var(--background-color);
+            padding-bottom: 10px;
+        }
+
+        /* Стилизация форм и полей ввода */
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 45px 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* Вывод единиц измерения внутри поля */
+        .unit {
+            position: absolute;
+            right: 12px;
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: bold;
+            pointer-events: none;
+        }
+
+        /* Вывод ошибок валидации */
+        .error-message {
+            color: var(--error-color);
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+            font-weight: 500;
+        }
+
+        /* Кнопки управления */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+        }
+
+        .btn-calc {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-calc:hover {
+            background: var(--secondary-color);
+        }
+
+        .btn-save {
+            background: #7f8c8d;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #95a5a6;
+        }
+
+        /* Блок вывода результатов */
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .result-value {
+            font-weight: bold;
+            font-size: 18px;
+            color: var(--primary-color);
+        }
+
+        /* Инженерное заключение с цветовой индикацией */
+        .conclusion-box {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 15px;
+            border: 1px solid transparent;
+            display: none;
+        }
+
+        .conclusion-box.success {
+            display: block;
+            background-color: #e8f8f5;
+            color: var(--success-color);
+            border-color: #a3e4d7;
+        }
+
+        .conclusion-box.error {
+            display: block;
+            background-color: #fdebd0;
+            color: var(--error-color);
+            border-color: #f5caba;
+        }
+
+        /* Информационные плашки отправки в облако */
+        .status-message {
+            margin-top: 10px;
+            font-size: 13px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Шапка проекта -->
+    <header>
+        <h1>Вариант №12: Расчет температурного перемещения</h1>
+        <p>Норматив: СП 35.13330.2011 «Мосты и трубы» (п. 6.27)</p>
+    </header>
+
+    <div class="main-content">
+        <!-- БЛОК 1: Исходные данные -->
+        <div class="card">
+            <h2>Исходные данные</h2>
+            <form id="calcForm" onsubmit="event.preventDefault();">
+                
+                <!-- Поле ввода длины пролета -->
+                <div class="form-group">
+                    <label for="spanLength">Длина пролетного строения (L):</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="spanLength" step="any" placeholder="Например: 33">
+                        <span class="unit">м</span>
+                    </div>
+                    <div class="error-message" id="error-spanLength">Ошибка</div>
+                </div>
+
+                <!-- Выбор материала конструкции -->
+                <div class="form-group">
+                    <label for="material">Материал конструкции (α):</label>
+                    <div class="input-wrapper">
+                        <select id="material">
+                            <option value="steel">Сталь (α = 1.2×10⁻⁵)</option>
+                            <option value="concrete">Железобетон (α = 1.0×10⁻⁵)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Максимальная температура воздуха -->
+                <div class="form-group">
+                    <label for="tempMax">Макс. температура воздуха (Tmax):</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="tempMax" step="any" placeholder="Например: 40">
+                        <span class="unit">°C</span>
+                    </div>
+                    <div class="error-message" id="error-tempMax">Ошибка</div>
+                </div>
+
+                <!-- Минимальная температура воздуха -->
+                <div class="form-group">
+                    <label for="tempMin">Мин. температура воздуха (Tmin):</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="tempMin" step="any" placeholder="Например: -40">
+                        <span class="unit">°C</span>
+                    </div>
+                    <div class="error-message" id="error-tempMin">Ошибка</div>
+                </div>
+
+                <!-- Допустимый ход деформационного шва -->
+                <div class="form-group">
+                    <label for="gapMax">Допустимый зазор / ход шва (Δmax):</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="gapMax" step="any" placeholder="Например: 50">
+                        <span class="unit">мм</span>
+                    </div>
+                    <div class="error-message" id="error-gapMax">Ошибка</div>
+                </div>
+
+                <!-- Кнопки действий -->
+                <div class="btn-group">
+                    <button type="button" class="btn-calc" onclick="calculateMovement()">Рассчитать перемещения</button>
+                    <button type="button" class="btn-save" onclick="saveToGoogleSheets()">Сохранить в Google Sheets</button>
+                </div>
+                <div class="status-message" id="statusMessage"></div>
+            </form>
+        </div>
+
+        <!-- БЛОК 2: Результаты -->
+        <div class="card">
+            <h2>Результаты расчета</h2>
+            
+            <div class="result-item">
+                <span>Температурная амплитуда (ΔT):</span>
+                <span class="result-value" id="resDeltaT">—</span>
+            </div>
+            
+            <div class="result-item">
+                <span>Полное линейное перемещение (ΔL):</span>
+                <span class="result-value" id="resDeltaL">—</span>
+            </div>
+
+            <!-- Контейнер для вывода инженерного заключения -->
+            <div class="conclusion-box" id="conclusionBox"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Глобальный объект для хранения текущего состояния расчетов (нужен для отправки в облако)
+    let calculationState = {
+        calculated: false,
+        inputs: {},
+        results: {},
+        conclusion: "",
+        warnings: ""
+    };
+
+    /**
+     * Показывает текст ошибки под конкретным полем ввода
+     */
+    function showError(inputId, text) {
+        const errorEl = document.getElementById(`error-${inputId}`);
+        if (errorEl) {
+            errorEl.innerText = text;
+            errorEl.style.display = 'block';
+        }
+        document.getElementById(inputId).style.borderColor = 'var(--error-color)';
+    }
+
+    /**
+     * Очищает все старые ошибки валидации
+     */
+    function clearErrors() {
+        const errorMessages = document.querySelectorAll('.error-message');
+        errorMessages.forEach(el => el.style.display = 'none');
+        
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(el => el.style.borderColor = 'var(--border-color)');
+        
+        document.getElementById('statusMessage').innerText = "";
+    }
+
+    /**
+     * Основная функция расчета
+     */
+    function calculateMovement() {
+        clearErrors();
+        
+        // Получение значений из элементов интерфейса
+        const spanLengthRaw = document.getElementById('spanLength').value;
+        const material = document.getElementById('material').value;
+        const tempMaxRaw = document.getElementById('tempMax').value;
+        const tempMinRaw = document.getElementById('tempMin').value;
+        const gapMaxRaw = document.getElementById('gapMax').value;
+
+        let hasErrors = false;
+
+        // --- ВАЛИДАЦИЯ ПУСТЫХ ПОЛЕЙ ---
+        if (!spanLengthRaw) { showError('spanLength', 'Поле не должно быть пустым'); hasErrors = true; }
+        if (!tempMaxRaw) { showError('tempMax', 'Поле не должно быть пустым'); hasErrors = true; }
+        if (!tempMinRaw) { showError('tempMin', 'Поле не должно быть пустым'); hasErrors = true; }
+        if (!gapMaxRaw) { showError('gapMax', 'Поле не должно быть пустым'); hasErrors = true; }
+
+        if (hasErrors) return;
+
+        // Преобразование текстовых данных в числа
+        const L = parseFloat(spanLengthRaw);
+        const Tmax = parseFloat(tempMaxRaw);
+        const Tmin = parseFloat(tempMinRaw);
+        const gapMax = parseFloat(gapMaxRaw);
+
+        // --- ВАЛИДАЦИЯ ОТРИЦАТЕЛЬНЫХ И ОШИБОЧНЫХ ЗНАЧЕНИЙ ---
+        if (L <= 0) {
+            showError('spanLength', 'Длина пролета должна быть строго больше 0');
+            hasErrors = true;
+        }
+        if (gapMax <= 0) {
+            showError('gapMax', 'Допустимый ход шва должен быть строго больше 0');
+            hasErrors = true;
+        }
+        if (Tmax <= Tmin) {
+            showError('tempMax', 'Максимальная температура должна быть больше минимальной');
+            hasErrors = true;
+        }
+
+        // --- ГРАНИЧНАЯ ЛОВУШКА ДЛЯ ВАРИАНТА №12 ---
+        // Если длина пролета введена > 150 метров, вероятнее всего пользователь ввел данные в мм вместо метров.
+        if (L > 150) {
+            showError('spanLength', 'Граничная ловушка! Длина > 150м. Возможно, вы ввели данные в мм вместо метров.');
+            hasErrors = true;
+        }
+
+        if (hasErrors) {
+            resetResults();
+            return;
+        }
+
+        // --- МАТЕМАТИЧЕСКИЙ РАСЧЕТ И ПЕРЕВОД ЕДИНИЦ ---
+        // Коэффициент линейного расширения по СП 35.13330.2011
+        const alpha = (material === 'steel') ? 1.2e-5 : 1.0e-5;
+
+        // Расчет температурной амплитуды градусов Цельсия
+        const deltaT = Tmax - Tmin;
+
+        // Расчет изменения длины (в метрах) по формуле: ΔL = α * L * ΔT
+        const deltaL_meters = alpha * L * deltaT;
+
+        // Перевод итогового перемещения из метров обратно в миллиметры для сопоставления со швом
+        const deltaL_mm = deltaL_meters * 1000;
+
+        // --- ВЫВОД РЕЗУЛЬТАТОВ В ИНТЕРФЕЙС ---
+        document.getElementById('resDeltaT').innerText = `${deltaT.toFixed(1)} °C`;
+        document.getElementById('resDeltaL').innerText = `${deltaL_mm.toFixed(2)} мм`;
+
+        // --- ИНЖЕНЕРНОЕ ЗАКЛЮЧЕНИЕ И ЦВЕТОВАЯ ИНДИКАЦИЯ ---
+        const conclusionBox = document.getElementById('conclusionBox');
+        let conclusionText = "";
+        let isSuccess = false;
+
+        if (deltaL_mm <= gapMax) {
+            isSuccess = true;
+            conclusionText = `Условие соблюдено. Расчетное перемещение (${deltaL_mm.toFixed(2)} мм) не превышает допустимый зазор деформационного шва (${gapMax} мм). Проектное решение надежно.`;
+            conclusionBox.className = "conclusion-box success";
+        } else {
+            isSuccess = false;
+            conclusionText = `Аварийная ситуация! Расчетное перемещение (${deltaL_mm.toFixed(2)} мм) превышает допустимый ход шва (${gapMax} мм). Деформационный шов заклинит, требуется увеличить зазор или изменить схему пролетов!`;
+            conclusionBox.className = "conclusion-box error";
+        }
+        conclusionBox.innerText = conclusionText;
+
+        // Сохранение данных в глобальный объект для последующей отправки
+        calculationState = {
+            calculated: true,
+            variant: "Вариант 12",
+            toolName: "Температурное перемещение пролетного строения",
+            inputs: {
+                length_m: L,
+                material: material === 'steel' ? 'Сталь' : 'Железобетон',
+                alpha: alpha,
+                t_max_c: Tmax,
+                t_min_c: Tmin,
+                max_gap_mm: gapMax
+            },
+            results: {
+                delta_t_c: deltaT,
+                delta_l_mm: parseFloat(deltaL_mm.toFixed(2))
+            },
+            conclusion: conclusionText,
+            warnings: L > 120 ? "Длина пролета близка к критическому значению." : "Нет"
+        };
+    }
+
+    /**
+     * Сброс вывода при возникновении ошибок валидации
+     */
+    function resetResults() {
+        document.getElementById('resDeltaT').innerText = "—";
+        document.getElementById('resDeltaL').innerText = "—";
+        const cb = document.getElementById('conclusionBox');
+        cb.style.display = 'none';
+        cb.innerText = "";
+        calculationState.calculated = false;
+    }
+
+    /**
+     * ЭТАП 4: Интеграция с Google Таблицами через Apps Script
+     */
+    function saveToGoogleSheets() {
+        const statusMessage = document.getElementById('statusMessage');
+        
+        // Проверка: был ли вообще выполнен расчет перед сохранением
+        if (!calculationState.calculated) {
+            statusMessage.style.color = 'var(--error-color)';
+            statusMessage.innerText = "Сначала выполните корректный расчет перемещений!";
+            return;
+        }
+
+        // Вставьте ваш скопированный развернутый URL из Google Apps Script вместо этой заглушки
+        const webAppUrl = 'ВСТАВИТЬ_ВАШ_URL_ИЗ_ПЗ_25';
+
+        if (webAppUrl === 'ВСТАВИТЬ_ВАШ_URL_ИЗ_ПЗ_25') {
+            statusMessage.style.color = 'var(--error-color)';
+            statusMessage.innerText = "Ошибка: Замените заглушку URL на ваш реальный веб-адрес Apps Script из ПЗ №25!";
+            return;
+        }
+
+        statusMessage.style.color = '#d35400';
+        statusMessage.innerText = "Отправка данных в облако...";
+
+        // Выполнение асинхронного POST-запроса с помощью стандартного Fetch API
+        fetch(webAppUrl, {
+            method: 'POST',
+            mode: 'no-cors', // Используется no-cors режим в учебных целях для обхода политики CORS в Apps Script
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(calculationState)
+        })
+        .then(() => {
+            statusMessage.style.color = 'var(--success-color)';
+            statusMessage.innerText = "Данные успешно отправлены на сервер Google Таблицы!";
+        })
+        .catch(error => {
+            statusMessage.style.color = 'var(--error-color)';
+            statusMessage.innerText = "Произошла сетевая ошибка при сохранении: " + error.message;
+        });
+    }
+</script>
+
+</body>
+</html>
